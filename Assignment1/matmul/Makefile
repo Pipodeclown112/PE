@@ -14,13 +14,19 @@ ifneq ($(SERIAL), 1)
 	CXX_FLAGS += $(PAR_FLAG)
 endif
 
-APPS = matmul transpose
+APPS = matmul matmul_cache matmul_unroll transpose
 
 .PHONY: all
 
 all: $(APPS)
 
 matmul: matmul.c mmio.c mm_kernel.c
+	$(CXX) $(CXX_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
+
+matmul_cache: matmul.c mmio.c mm_kernel_cache.c
+	$(CXX) $(CXX_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
+
+matmul_unroll: matmul.c mmio.c mm_kernel_unroll.c
 	$(CXX) $(CXX_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
 
 transpose: transpose.c mmio.c
