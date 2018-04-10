@@ -1,6 +1,7 @@
 # See LICENSE.txt for license details.
 
 CXX_FLAGS += -std=c++11 -O3 -Wall
+SIMD_FLAGS = -ftree-vectorize -march=native -ffast-math
 PAR_FLAG = -fopenmp
 #GENERATE = -D GENERATE
 GENERATE = 
@@ -14,7 +15,7 @@ ifneq ($(SERIAL), 1)
 	CXX_FLAGS += $(PAR_FLAG)
 endif
 
-APPS = matmul matmul_cache matmul_unroll transpose
+APPS = matmul matmul_cache matmul_cache_simd matmul_unroll matmul_simd transpose
 
 .PHONY: all
 
@@ -26,8 +27,14 @@ matmul: matmul.c mmio.c mm_kernel.c
 matmul_cache: matmul.c mmio.c mm_kernel_cache.c
 	$(CXX) $(CXX_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
 
+matmul_cache_simd: matmul.c mmio.c mm_kernel_cache_simd.c
+	$(CXX) $(CXX_FLAGS) $(SIMD_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
+
 matmul_unroll: matmul.c mmio.c mm_kernel_unroll.c
 	$(CXX) $(CXX_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
+
+matmul_simd: matmul.c mmio.c mm_kernel_simd.c
+	$(CXX) $(CXX_FLAGS) $(SIMD_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
 
 transpose: transpose.c mmio.c
 	$(CXX) $(CXX_FLAGS) $(GENERATE) -o $@ $^ $(LFLAGS)

@@ -1,7 +1,7 @@
 #include "mm_kernel.h"
 
 
-void matrix_mult(int m, int n, int p, float *A, float *B, float *C) {
+void matrix_mult(int m, int n, int p, float* __restrict__ A, float* __restrict__ B, float* __restrict__ C) {
   int i, j, k, l;
 
   for(i=0; i<m; i++) {
