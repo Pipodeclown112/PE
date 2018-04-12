@@ -15,7 +15,7 @@ ifneq ($(SERIAL), 1)
 	CXX_FLAGS += $(PAR_FLAG)
 endif
 
-APPS = matmul matmul_cache matmul_cache_simd matmul_cpu matmul_unroll matmul_simd transpose
+APPS = matmul matmul_cache matmul_cache_simd matmul_cpu matmul_gpu matmul_unroll matmul_simd transpose
 
 .PHONY: all
 
@@ -32,6 +32,9 @@ matmul_cache_simd: matmul.c mmio.c mm_kernel_cache_simd.c
 
 matmul_cpu: matmul.c mmio.c mm_kernel_cpu.c
 	$(CXX) $(CXX_FLAGS) $(SIMD_FLAGS) $(PAR_FLAG) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
+
+matmul_gpu: matmul.c mmio.c mm_kernel_gpu.c
+	$(CXX) $(CXX_FLAGS) $(SIMD_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
 
 matmul_unroll: matmul.c mmio.c mm_kernel_unroll.c
 	$(CXX) $(CXX_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
