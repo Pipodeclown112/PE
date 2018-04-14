@@ -1,24 +1,25 @@
+#include <cuda.h>
 #include <cuda_runtime.h>
+#include <math.h>
+#include <stdio.h>
 #include "mm_kernel.h"
 
-__global__ void mat_mul(float* __restrict__ A, float* __restrict__ B, float* __restrict__ C) {
-  int index = threadIdx.x + blockIdx.x * blockDim.x;
-  C[index] = A[index]*B[index];
+__global__ void mat_mul_kernel(int m, int n, int p, float* __restrict__ A, float* __restrict__ B, float* __restrict__ C) {
+  int row = threadIdx.y + blockIdx.y * blockDim.y;
+  int col = threadIdx.x + blockIdx.x * blockDim.x;
+  int k;
 
-  // for(i=0; i<m; i++) {
-  //   for(l=0; l<p; l++){
-  //     C[i*p+l]=0;
-  //   }
-  //   for(k=0; k<n; k++) {
-  //     for(j=0; j<p; j++) {
-  //       C[i*p+j] += A[i*n+k]*B[k*p+j];
-  //     }
-  //   }
-  // }
+  // Only let this thread compute if it is in C
+  if(row < p && col < m) {
+    C[row*p+col] = 0;
+    for(k=0; k<n; k++){
+      C[row*p+col] += A[row*n+k]*B[k*p+col];
+    } 
+  }
 }
 
 void matrix_mult(int m, int n, int p, float* __restrict__ A, float* __restrict__ B, float* __restrict__ C) {
-  int i, j, k, l;
+  float* GPU_A, *GPU_B, *GPU_C;
   int size_a = (m*n),
       size_b = (n*p),
       size_c = (m*p);
@@ -30,8 +31,15 @@ void matrix_mult(int m, int n, int p, float* __restrict__ A, float* __restrict__
 
   cudaMemcpy(GPU_A, A, sizeof(float) * size_a, cudaMemcpyHostToDevice);
   cudaMemcpy(GPU_B, B, sizeof(float) * size_b, cudaMemcpyHostToDevice);
+  
+  dim3 threadsPerBlock(32,16);
+  dim3 blocksPerGrid(1, 1);
+  if (size_c > 512){
+    blocksPerGrid.x = ceil(double(m)/32);
+    blocksPerGrid.y = ceil(double(p)/16);
+  }
 
-  mat_mul<<<size_c, 512>>>(GPU_A, GPU_B, GPU_C);
+  mat_mul_kernel<<<blocksPerGrid,threadsPerBlock>>>(m,n,p,GPU_A,GPU_B,GPU_C);
 
   cudaThreadSynchronize();
 

@@ -4,7 +4,8 @@ CXX_FLAGS += -std=c++11 -O3 -Wall
 SIMD_FLAGS = -ftree-vectorize -march=native -ffast-math
 PAR_FLAG = -fopenmp
 NVCC = nvcc
-NVCC_FLAGS = -gencode arch=compute_35,code=sm_35
+NVCC_FLAGS = -c -gencode arch=compute_35,code=sm_35
+NVCC_LFLAGS = -lcuda -lcudart
 #GENERATE = -D GENERATE
 GENERATE = 
 TIMING = -D TIMING
@@ -17,7 +18,7 @@ ifneq ($(SERIAL), 1)
 	CXX_FLAGS += $(PAR_FLAG)
 endif
 
-APPS = matmul matmul_cache matmul_cache_simd matmul_cpu matmul_gpu matmul_unroll matmul_simd transpose
+APPS = cuda.o matmul matmul_cache matmul_cache_simd matmul_cpu matmul_gpu matmul_unroll matmul_simd transpose
 
 .PHONY: all
 
@@ -35,8 +36,11 @@ matmul_cache_simd: matmul.c mmio.c mm_kernel_cache_simd.c
 matmul_cpu: matmul.c mmio.c mm_kernel_cpu.c
 	$(CXX) $(CXX_FLAGS) $(SIMD_FLAGS) $(PAR_FLAG) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
 
-matmul_gpu: matmul.c mmio.c mm_kernel_gpu.cu
-	$(NVCC) $(NVCC_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
+cuda.o:
+	$(NVCC) $(NVCC_FLAGS) mm_kernel_gpu.cu -o cuda.o
+
+matmul_gpu: matmul.c mmio.c cuda.o
+	$(CXX) $(CXX_FLAGS) $(NVCC_LFLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
 
 matmul_unroll: matmul.c mmio.c mm_kernel_unroll.c
 	$(CXX) $(CXX_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
@@ -49,4 +53,4 @@ transpose: transpose.c mmio.c
 
 .PHONY: clean
 clean:
-	rm -f $(APPS)
+	rm -f $(APPS) *.o
