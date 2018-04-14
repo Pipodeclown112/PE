@@ -3,6 +3,8 @@
 CXX_FLAGS += -std=c++11 -O3 -Wall
 SIMD_FLAGS = -ftree-vectorize -march=native -ffast-math
 PAR_FLAG = -fopenmp
+NVCC = nvcc
+NVCC_FLAGS = -gencode arch=compute_35,code=sm_35
 #GENERATE = -D GENERATE
 GENERATE = 
 TIMING = -D TIMING
@@ -33,8 +35,8 @@ matmul_cache_simd: matmul.c mmio.c mm_kernel_cache_simd.c
 matmul_cpu: matmul.c mmio.c mm_kernel_cpu.c
 	$(CXX) $(CXX_FLAGS) $(SIMD_FLAGS) $(PAR_FLAG) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
 
-matmul_gpu: matmul.c mmio.c mm_kernel_gpu.c
-	$(CXX) $(CXX_FLAGS) $(SIMD_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
+matmul_gpu: matmul.c mmio.c mm_kernel_gpu.cu
+	$(NVCC) $(NVCC_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
 
 matmul_unroll: matmul.c mmio.c mm_kernel_unroll.c
 	$(CXX) $(CXX_FLAGS) $(GENERATE) $(TIMING) -o $@ $^ $(LFLAGS)
