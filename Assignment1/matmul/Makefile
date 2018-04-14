@@ -4,7 +4,7 @@ CXX_FLAGS += -std=c++11 -O3 -Wall
 SIMD_FLAGS = -ftree-vectorize -march=native -ffast-math
 PAR_FLAG = -fopenmp
 NVCC = nvcc
-NVCC_FLAGS = -c -gencode arch=compute_35,code=sm_35
+NVCC_FLAGS = -c -arch sm_52
 NVCC_LFLAGS = -lcuda -lcudart
 #GENERATE = -D GENERATE
 GENERATE = 
